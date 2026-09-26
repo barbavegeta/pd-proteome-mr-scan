@@ -1,0 +1,2 @@
+rsid,ID,ID_POS,effect_allele,other_allele,A1FREQ,INFO,exposure_beta,exposure_se,exposure_LOG10P,F_stat,outcome_beta,outcome_se,outcome_LP,outcome_N,mr_method,mr_beta,mr_se,mr_p,mr_OR,mr_OR_lci,mr_OR_uci
+rs75801644,7:23306141:G:A:imp:v1,23306141,A,G,0.0227377,0.998724,-1.11806,0.0255776,416.662,1910.7797851060143,0.0751,0.054,0.784362,482730,Lead-variant Wald ratio,-0.0671699193245443,0.04832238292700468,0.16451752197041236,0.9350363070998313,0.8505417412549428,1.0279247368916937

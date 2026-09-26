@@ -1,0 +1,9 @@
+work/
+results*/
+!docs/example_results/
+.nextflow*
+__pycache__/
+*.pyc
+.pytest_cache/
+data/
+*.tar

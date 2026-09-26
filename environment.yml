@@ -1,0 +1,13 @@
+name: pd-proteome-mr-scan
+channels: [conda-forge]
+dependencies:
+  - python=3.11
+  - numpy>=1.24
+  - pandas>=2.0
+  - scipy>=1.10
+  - pyarrow>=12
+  - matplotlib>=3.7
+  - pytest>=7
+  - pip
+  - pip:
+      - bed-reader>=1.0
