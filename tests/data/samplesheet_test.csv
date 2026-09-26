@@ -1,0 +1,6 @@
+protein_id,gene,chr,start,end,exposure
+GPNMB:Q14956:OID20173:v1,GPNMB,7,23235967,23275108,../fixtures/gpnmb_locus/gpnmb_ukbppp_chr7_22p8_23p8Mb_exposure.tsv
+SYN_SHARED:SIM000:OIDSIM:v1,SYN_SHARED,22,19955063,19965063,exposures/discovery_chr22_SYN_SHARED.regenie.gz
+SYN_DISTINCT:SIM000:OIDSIM:v1,SYN_DISTINCT,22,29954156,29964156,exposures/discovery_chr22_SYN_DISTINCT.regenie.gz
+SYN_NULL:SIM000:OIDSIM:v1,SYN_NULL,22,39957559,39967559,exposures/discovery_chr22_SYN_NULL.regenie.gz
+SYN_MULTI:SIM000:OIDSIM:v1,SYN_MULTI,22,44957797,44967797,exposures/discovery_chr22_SYN_MULTI.regenie.gz
