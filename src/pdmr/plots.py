@@ -48,9 +48,15 @@ def volcano(res: pd.DataFrame, path, label_tiers=3, highlight=()):
         ax.scatter(g.lb, g.nlp, s=sz ** 2, c=col, marker=mk, edgecolors=SURFACE, linewidths=1.2,
                    zorder=z, label=f"{tier} (n={len(g)})")
     ax.axvline(0, color=MUTED, lw=1)
-    lab = d[d.tier.isin(TIERS[:label_tiers]) | d.gene.isin(highlight)]
+    lab = d[d.tier.isin(TIERS[:label_tiers]) | d.gene.isin(highlight)].sort_values("nlp")
+    placed = []
     for r in lab.itertuples():
-        ax.annotate(r.gene, (r.lb, r.nlp), xytext=(5, 4), textcoords="offset points", fontsize=8.5, color=INK)
+        # Stack the labels of points that sit close together so names don't overprint.
+        near = sum(abs(x - r.lb) < 0.12 and abs(y - r.nlp) < 0.06 * d.nlp.max() for x, y in placed)
+        placed.append((r.lb, r.nlp))
+        ax.annotate(r.gene, (r.lb, r.nlp), xytext=(5, 4 + 11 * near), textcoords="offset points",
+                    fontsize=8.5, color=INK,
+                    arrowprops=dict(arrowstyle="-", color=MUTED, lw=0.6) if near else None)
     ax.set_xlabel("MR effect on Parkinson’s disease, log OR per SD protein", color=INK2, fontsize=10)
     ax.set_ylabel("−log$_{10}$ MR p-value", color=INK2, fontsize=10)
     ax.legend(frameon=False, fontsize=8.5, labelcolor=INK2, loc="upper center",

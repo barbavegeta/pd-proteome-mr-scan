@@ -77,6 +77,22 @@ def read_generic(path, chrom, start, end, pos_col="pos37", **_):
     return d.reset_index(drop=True)
 
 
+def read_eqtlcat_slice(path, chrom, start38, end38, info_min=0.8, maf_min=0.01, **_):
+    """Read one molecular trait's slice written by scripts/prepare_eqtl_catalogue.py.
+
+    eQTL Catalogue reports GRCh38 positions and effects for the ALT allele; the
+    slice also carries ``pos37``, looked up through the rsID in the outcome GWAS.
+    ``info`` is the imputation r2 and ``eaf`` the ALT allele frequency (ac / an).
+    """
+    d = pd.read_csv(path, sep="\t", dtype={"chr": str, "rsid": str, "ea": str, "oa": str,
+                                           "variant_id": str})
+    d["chr"] = d["chr"].map(norm_chr)
+    d = d[(d["chr"] == norm_chr(chrom)) & d["pos38"].between(start38, end38)]
+    maf = np.minimum(d["eaf"], 1 - d["eaf"])
+    d = d[(d["info"] >= info_min) & (maf >= maf_min) & (d["se"] > 0)]
+    return d.reset_index(drop=True)
+
+
 # --------------------------------------------------------------------------- outcome
 def iter_opengwas_vcf(path, chunksize=1_000_000):
     """Yield standard-format chunks from an IEU OpenGWAS VCF (ES/SE/LP/AF/SS/NC/ID)."""
@@ -141,4 +157,4 @@ def read_outcome_window(outcome_dir, chrom, start37, end37):
     return d.reset_index(drop=True)
 
 
-READERS = {"ukbppp": read_ukbppp_regenie, "generic": read_generic}
+READERS = {"ukbppp": read_ukbppp_regenie, "eqtlcat": read_eqtlcat_slice, "generic": read_generic}
