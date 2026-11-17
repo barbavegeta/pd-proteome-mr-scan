@@ -4,7 +4,45 @@ A Nextflow pipeline that tests every plasma protein in the UK Biobank Pharma Pro
 
 This extends my MSc dissertation, which assessed a single protein ([GPNMB](https://github.com/barbavegeta/GPNMB-Parkinson-MR-Colocalisation)), into the scalable target-prioritisation workflow used by human-genetics teams in drug discovery.
 
-The full UKB-PPP release is on Synapse behind a data-access agreement, so the first real-data run uses the 3,211 SomaScan plasma protein measurements of Sun et al. 2018 (INTERVAL, N = 3,301), which the eQTL Catalogue distributes openly. The same pipeline runs on UKB-PPP once the files are downloaded (see [Running on real data](#running-on-real-data)).
+It has been run on both large plasma pQTL resources: the UKB-PPP European discovery set (2,940 Olink assays, about 34,000 people) and the 3,211 SomaScan measurements of Sun et al. 2018 (INTERVAL, N = 3,301), which the eQTL Catalogue distributes openly. UKB-PPP's 1.6 TB of summary statistics are read with HTTP byte-range requests, so the whole proteome comes down as under 100 GB (see [Running on real data](#running-on-real-data)).
+
+## Results: UKB-PPP Olink plasma proteome
+
+![MR estimates for 2,016 testable Olink proteins, coloured by evidence tier](docs/img/volcano_ukbppp.png)
+
+Of 2,940 Olink assays (2,957 rows: 15 assays measure a protein encoded by two or three genes and are tested once per gene), 2,016 had a genome-wide significant cis-pQTL to test, 848 had none, and 90 sit on chromosome X, which the PD GWAS does not cover. Eight pass FDR < 0.05:
+
+| Tier | Protein | Locus | OR per SD (95% CI) | MR q | Coloc |
+|---|---|---|---|---|---|
+| 1: MR + colocalisation | CTF1 | 16p11.2 (KAT8/BCKDK) | 8.07 (4.14-15.75) | 9×10⁻⁷ | PP.H4 0.95 |
+| 1: MR + colocalisation | STX4 | 16p11.2 (KAT8/BCKDK) | 0.09 (0.04-0.21) | 1×10⁻⁵ | PP.H4 0.89 |
+| 2: suggestive colocalisation | LRRC37A2 | 17q21.31 (MAPT inversion) | 0.83 (0.77-0.90) | 0.006 | PP.H4 0.58 |
+| 3: distinct causal variants | SNCA | SNCA | 0.10 (0.05-0.21) | 9×10⁻⁷ | PP.H3 1.00 |
+| 3: distinct causal variants | PRSS53 | 16p11.2 (KAT8/BCKDK) | 0.90 (0.87-0.94) | 9×10⁻⁵ | PP.H3 0.99 |
+| 3: distinct causal variants | PRSS8 | 16p11.2 (KAT8/BCKDK) | 0.46 (0.33-0.64) | 0.002 | PP.H3 1.00 |
+| 3: distinct causal variants | EFNA1 | GBA1 | 1.23 (1.11-1.36) | 0.031 | PP.H3 1.00 |
+| 3: distinct causal variants | HLA-DRA | HLA | 0.80 (0.72-0.90) | 0.042 | PP.H3 0.98 |
+
+All eight sit in windows with a genome-wide significant PD signal, at known PD risk loci. Colocalisation is what separates them. For five, the protein and PD signals come from different variants, so the MR association rides on LD with the PD variant rather than on the protein. CTF1 and STX4 do colocalise, but they are evidence for the 16p11.2 locus rather than for either gene. Each rests on one modest pQTL (lead p = 1×10⁻¹¹ and 2×10⁻⁸), the implied effects are implausibly large and point in opposite directions in the same gene-dense region, and PP.H4 falls to 0.65 and 0.45 under a stricter prior (p12 = 10⁻⁶). LRRC37A2 lies in the 17q21.31 inversion, where long-range LD makes gene-level attribution unreliable. So the scan finds PD loci without being told where they are, but no single protein comes out as a confident causal candidate. That is a realistic outcome for a proteome-wide scan, and the tiers and flags are there to make it visible.
+
+Full results: [`docs/results_ukbppp/scan_results.tsv`](docs/results_ukbppp/scan_results.tsv), per-method MR estimates and the [HTML report](docs/results_ukbppp/pd_proteome_mr_report.html). The scan took about 40 minutes on a 12-core laptop, after a four-hour download.
+
+![Forest plot of the FDR-significant Olink proteins](docs/img/forest_ukbppp.png)
+
+### Olink against SomaScan
+
+The SomaScan hits (below) mostly do not carry over to Olink:
+
+| Protein | SomaScan (Sun et al. 2018) | UKB-PPP Olink |
+|---|---|---|
+| FCGR2A | Tier 1: OR 1.06, PP.H4 0.96 | No MR evidence: OR 1.05, p = 0.07, PP.H4 0.11 |
+| GPNMB | Tier 2-3: OR 1.50-1.56 | No MR evidence: OR 1.08, p = 0.53, PP.H3 1.00 |
+| CTSB | Tier 2: OR 0.82, PP.H4 0.73 | Same direction, below FDR: OR 0.87, p = 0.03, PP.H4 0.73 |
+| PTGR1 | Tier 2: OR 0.84, PP.H4 0.59 | Same direction, below FDR: OR 0.85, p = 8×10⁻⁴ (q = 0.12), PP.H4 0.49 |
+| SNCA | Tier 3 | Tier 3 |
+| BAG3 | Tier 3 | No MR evidence, PP.H3 1.00 |
+
+For GPNMB this matches my dissertation: the Olink pQTL and the PD signal are distinct, while SomaScan gives a positive MR estimate. Disagreement between the platforms is common in pQTL studies. SomaScan aptamers and Olink antibodies can detect different forms of a protein, and protein-altering variants can create binding artefacts on either platform. CTSB and PTGR1 agree in direction and size on both platforms, which makes them the most consistent candidates from the two scans.
 
 ## Results: SomaScan plasma proteome (Sun et al. 2018)
 
@@ -64,7 +102,7 @@ The statistics are implemented in Python (NumPy/SciPy) and checked against the r
 | IVW fixed + multiplicative random effects, Cochran's Q (3 clumping settings) | e.g. OR 1.079, RE p = 0.473 | identical |
 | Wald ratio, lead variant rs75801644 | β = −0.06717, SE 0.04832 | identical |
 
-Run them with `python -m pytest -q` (15 tests). `validation/cross_check_with_R.R` repeats the coloc comparison with `coloc::coloc.abf` for any protein from a pipeline run.
+Run them with `python -m pytest -q` (17 tests). `validation/cross_check_with_R.R` repeats the coloc comparison with `coloc::coloc.abf` for any protein from a pipeline run.
 
 ## Test run
 
@@ -107,16 +145,16 @@ nextflow run main.nf --samplesheet samplesheet_sun2018.csv --exposure_format eqt
 
 1. **PD GWAS.** Download `ieu-b-7.vcf.gz` (Nalls et al. 2019, excluding 23andMe; 33,674 cases, 449,056 controls) from the IEU OpenGWAS project.
 2. **LD reference.** 1000 Genomes Phase 3 EUR PLINK files (GRCh37), either as one genome-wide set or per chromosome (use `{chr}` in the prefix, e.g. `ref/EUR_chr{chr}`).
-3. **pQTLs.** UKB-PPP European discovery summary statistics are on Synapse, one tar per protein, well over a terabyte in total. `scripts/fetch_ukbppp_cis.py` streams them: it downloads one protein, keeps only the cis window, deletes the tar and moves on. A sensible first pass is the proteins near PD risk loci:
+3. **pQTLs.** UKB-PPP European discovery summary statistics are on Synapse (folder `syn51365303`), one tar per protein, about 1.6 TB in total. `scripts/fetch_ukbppp_cis.py` never downloads a whole tar. The files sit in S3, which serves byte ranges, so it reads the tar headers (a few kB), downloads only the chromosome carrying the gene (~30 MB) and keeps the cis window. The whole proteome comes down as under 100 GB instead of 1.6 TB, several proteins in parallel (`--workers`), and a re-run skips proteins already done. A quick first pass is the proteins near PD risk loci:
 
 ```bash
 python bin/prepare_outcome.py --gwas ieu-b-7.vcf.gz --outdir outcome_by_chr
 python scripts/select_proteins_near_pd_loci.py --outcome-dir outcome_by_chr \
     --protein-map assets/olink_protein_map_3k_v1.tsv --out proteins_pd_loci.txt
 export SYNAPSE_AUTH_TOKEN=...            # after accepting the UKB-PPP data terms
-python scripts/fetch_ukbppp_cis.py --folder-id <synapse folder> \
+python scripts/fetch_ukbppp_cis.py --folder-id syn51365303 \
     --protein-map assets/olink_protein_map_3k_v1.tsv --proteins proteins_pd_loci.txt \
-    --outdir data/ukbppp_cis
+    --outdir data/ukbppp_cis --workers 16
 python scripts/build_samplesheet.py --protein-map assets/olink_protein_map_3k_v1.tsv \
     --sumstats-dir data/ukbppp_cis --out samplesheet.csv
 
@@ -136,12 +174,14 @@ scripts/                     data preparation (UKB-PPP fetch, eQTL Catalogue spl
 tests/                       validation against R, unit and end-to-end tests, fixtures
 validation/                  R cross-check script
 assets/                      UKB-PPP Olink protein map (gene coordinates, GRCh38)
+docs/results_ukbppp/         real-data results on the UKB-PPP Olink proteome
 docs/results_sun2018/        real-data results on the Sun et al. 2018 SomaScan proteome
 ```
 
 ## Limitations
 
 - Colocalisation assumes one causal variant per trait in the region. Loci with several pQTL signals need SuSiE-based colocalisation. For UKB-PPP, SuSiE with a 503-person 1000 Genomes LD panel proved unstable (see the [GPNMB repository](https://github.com/barbavegeta/GPNMB-Parkinson-MR-Colocalisation)). For Sun et al. 2018, the eQTL Catalogue publishes SuSiE fine-mapping with in-sample LD, which is the planned route for multi-signal colocalisation.
+- In gene-dense regions (16p11.2, 17q21.31, HLA) several proteins can colocalise with the same PD signal. Colocalisation then points to the locus, not to a gene.
 - cis-MR assumes the instruments affect PD only through the protein. Protein-altering variants can change how the Olink antibodies bind (epitope effects) without changing protein level.
 - SomaScan aptamers can bind more than their intended protein, and a pQTL can reflect altered aptamer binding rather than abundance. The 3,301-person sample also leaves most proteins without a cis instrument.
 - The results are genetic prioritisation evidence, not proof of causality or druggability.
