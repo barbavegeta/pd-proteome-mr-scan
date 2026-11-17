@@ -49,13 +49,18 @@ def volcano(res: pd.DataFrame, path, label_tiers=3, highlight=()):
                    zorder=z, label=f"{tier} (n={len(g)})")
     ax.axvline(0, color=MUTED, lw=1)
     lab = d[d.tier.isin(TIERS[:label_tiers]) | d.gene.isin(highlight)].sort_values("nlp")
+    span = max(d.lb.max() - d.lb.min(), 1e-9)
     placed = []
     for r in lab.itertuples():
-        # Stack the labels of points that sit close together so names don't overprint.
-        near = sum(abs(x - r.lb) < 0.12 and abs(y - r.nlp) < 0.06 * d.nlp.max() for x, y in placed)
-        placed.append((r.lb, r.nlp))
-        ax.annotate(r.gene, (r.lb, r.nlp), xytext=(5, 4 + 11 * near), textcoords="offset points",
-                    fontsize=8.5, color=INK,
+        # Stack labels whose text would overprint another label at a similar height.
+        # Labels go on the outer side of the plot (left of points with negative effects).
+        side = -1 if r.lb < 0 else 1
+        w = 0.014 * span * (len(r.gene) + 1)
+        x0, x1 = (r.lb, r.lb + w) if side > 0 else (r.lb - w, r.lb)
+        near = sum(a0 < x1 and x0 < a1 and abs(y - r.nlp) < 0.06 * d.nlp.max() for a0, a1, y in placed)
+        placed.append((x0, x1, r.nlp))
+        ax.annotate(r.gene, (r.lb, r.nlp), xytext=(5 * side, 4 + 11 * near), textcoords="offset points",
+                    ha="left" if side > 0 else "right", fontsize=8.5, color=INK,
                     arrowprops=dict(arrowstyle="-", color=MUTED, lw=0.6) if near else None)
     ax.set_xlabel("MR effect on Parkinson’s disease, log OR per SD protein", color=INK2, fontsize=10)
     ax.set_ylabel("−log$_{10}$ MR p-value", color=INK2, fontsize=10)
@@ -82,7 +87,9 @@ def forest(res: pd.DataFrame, path, tiers=TIERS[:3], max_rows=40):
     ax.axvline(1, color=MUTED, lw=1)
     ax.set_xscale("log")
     from matplotlib.ticker import FuncFormatter, LogLocator
-    ax.xaxis.set_major_locator(LogLocator(base=10, subs=(1, 1.25, 1.5, 2, 3, 5, 7)))
+    lo, hi = d.mr_OR_lci.min(), d.mr_OR_uci.max()
+    subs = (1, 2, 5) if hi / lo > 20 else (1, 1.25, 1.5, 2, 3, 5, 7)  # fewer ticks over a wide range
+    ax.xaxis.set_major_locator(LogLocator(base=10, subs=subs))
     ax.xaxis.set_minor_locator(LogLocator(base=10, subs="auto"))
     ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
     ax.xaxis.set_minor_formatter(FuncFormatter(lambda v, _: ""))
