@@ -6,6 +6,11 @@ UKBPPP_ProteinID (with ':' or '_' separators) and, when several chromosome
 files exist, the chromosome carrying the gene (``chr<N>_``). Works for the
 cis slices written by fetch_ukbppp_cis.py and for fully extracted UKB-PPP tars.
 
+A few Olink assays measure a protein encoded by several genes (e.g. IL12A_IL12B,
+CKMT1A_CKMT1B). Each gene has its own cis window, so such assays get one row per
+gene, matched to a per-gene cis file, with the gene appended to the protein ID
+(``...:OID21327:v1:IL12B``) so that every row has a unique ID.
+
     python scripts/build_samplesheet.py --protein-map assets/olink_protein_map_3k_v1.tsv \\
         --sumstats-dir data/ukbppp_cis --out samplesheet.csv
 """
@@ -24,6 +29,7 @@ def main():
     a = ap.parse_args()
 
     pm = pd.read_csv(a.protein_map, sep="\t", dtype={"chr": str})
+    multi = set(pm.UKBPPP_ProteinID[pm.UKBPPP_ProteinID.duplicated()])
     if a.proteins:
         wanted = {l.strip() for l in open(a.proteins) if l.strip()}
         pm = pm[pm.UKBPPP_ProteinID.isin(wanted) | pm["HGNC.symbol"].isin(wanted)]
@@ -33,12 +39,15 @@ def main():
         pid = r["UKBPPP_ProteinID"]
         chrom = str(r["chr"]).replace("X", "23")
         hits = [f for f in files if pid in f.name or pid.replace(":", "_") in f.name]
+        if pid in multi:
+            hits = [f for f in hits if f".{r['HGNC.symbol']}." in f.name]
         if len(hits) > 1:
             hits = [f for f in hits if f"chr{chrom}_" in f.name] or hits
         if not hits:
             missing.append(pid)
             continue
-        rows.append({"protein_id": pid, "gene": r["HGNC.symbol"], "chr": chrom,
+        rows.append({"protein_id": f"{pid}:{r['HGNC.symbol']}" if pid in multi else pid,
+                     "gene": r["HGNC.symbol"], "chr": chrom,
                      "start": int(r["gene_start"]), "end": int(r["gene_end"]),
                      "exposure": str(hits[0].resolve())})
     sheet = pd.DataFrame(rows, columns=["protein_id", "gene", "chr", "start", "end", "exposure"])
