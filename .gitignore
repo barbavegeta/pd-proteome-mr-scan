@@ -1,6 +1,7 @@
 work/
 results*/
 !docs/example_results/
+!docs/results_sun2018/
 .nextflow*
 __pycache__/
 *.pyc
