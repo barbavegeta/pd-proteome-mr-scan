@@ -42,7 +42,7 @@ The SomaScan hits (below) mostly do not carry over to Olink:
 | SNCA | Tier 3 | Tier 3 |
 | BAG3 | Tier 3 | No MR evidence, PP.H3 1.00 |
 
-For GPNMB this matches my dissertation: the Olink pQTL and the PD signal are distinct, while SomaScan gives a positive MR estimate. Disagreement between the platforms is common in pQTL studies. SomaScan aptamers and Olink antibodies can detect different forms of a protein, and protein-altering variants can create binding artefacts on either platform. CTSB and PTGR1 agree in direction and size on both platforms, which makes them the most consistent candidates from the two scans.
+For GPNMB this matches my dissertation: the Olink pQTL and the PD signal are distinct, while SomaScan gives a positive MR estimate. Disagreement between the platforms is common in pQTL studies. SomaScan aptamers and Olink antibodies can detect different forms of a protein, and protein-altering variants can create binding artefacts on either platform. CTSB and PTGR1 agree in direction and size on both platforms, which makes them the most consistent candidates from the two scans. The PD side of both is weak, though: neither window has a genome-wide significant PD signal (lowest p = 1.7×10⁻⁶ at CTSB and 1.2×10⁻³ at PTGR1), and PP.H4 falls to 0.21 for CTSB and 0.09–0.13 for PTGR1 under a stricter prior. Their colocalisation therefore rests largely on the prior, and settling it needs a better-powered PD GWAS.
 
 ## Results: SomaScan plasma proteome (Sun et al. 2018)
 
